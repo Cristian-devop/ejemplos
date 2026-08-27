@@ -1,6 +1,6 @@
 # Doc to Markdown Converter
 
-Convertidor de documentos Word (.doc, .docx) a Markdown con una interfaz web moderna.
+Convertidor de documentos Word (.doc, .docx) a Markdown con una interfaz web moderna y con visualizador de la covercion tipo html.
 
 ## Requisitos
 
