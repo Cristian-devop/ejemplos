@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DOC → Markdown Converter</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #21253a;
+      --border: #2e3350;
+      --accent: #6c63ff;
+      --accent-hover: #857dff;
+      --success: #22c55e;
+      --error: #ef4444;
+      --text: #e2e8f0;
+      --text-muted: #7c85a2;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 60px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #6c63ff, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p {
+      color: var(--text-muted);
+      margin-top: 8px;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      width: 100%;
+      max-width: 720px;
+    }
+
+    /* ── Drop zone ── */
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .dropzone:hover,
+    .dropzone.dragover {
+      border-color: var(--accent);
+      background: rgba(108, 99, 255, 0.06);
+    }
+    .dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .dropzone-icon {
+      font-size: 3rem;
+      line-height: 1;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .dropzone p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 6px;
+    }
+    .dropzone .filename {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ── Options ── */
+    .options {
+      margin: 20px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .options label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .options input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+    }
+
+    /* ── Button ── */
+    button.convert-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button.convert-btn:hover { background: var(--accent-hover); }
+    button.convert-btn:active { transform: scale(0.98); }
+    button.convert-btn:disabled {
+      background: var(--border);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: none;
+      margin: 24px auto 0;
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Status message ── */
+    .status {
+      display: none;
+      margin-top: 20px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .status.success { background: rgba(34,197,94,0.12); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+    .status.error   { background: rgba(239,68,68,0.12);  color: var(--error);   border: 1px solid rgba(239,68,68,0.3); }
+
+    /* ── Preview area ── */
+    .preview-wrapper {
+      display: none;
+      margin-top: 28px;
+    }
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .preview-header span {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .preview-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-sm {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      transition: background 0.15s;
+    }
+    .btn-sm:hover { background: var(--border); }
+    .btn-sm.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-sm.primary:hover { background: var(--accent-hover); }
+
+    textarea.preview {
+      width: 100%;
+      height: 380px;
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+      font-size: 0.82rem;
+      resize: vertical;
+      outline: none;
+      line-height: 1.6;
+    }
+    textarea.preview:focus { border-color: var(--accent); }
+
+    footer {
+      margin-top: 48px;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>DOC → Markdown</h1>
+    <p>Convierte archivos <strong>.doc</strong> y <strong>.docx</strong> a Markdown sin perder datos</p>
+  </header>
+
+  <div class="card">
+
+    <!-- Drop zone -->
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept=".doc,.docx" />
+      <span class="dropzone-icon">📄</span>
+      <strong>Arrastra tu archivo aquí</strong>
+      <p>o haz clic para seleccionarlo</p>
+      <p class="filename" id="filenameLabel"></p>
+    </div>
+
+    <!-- Options -->
+    <div class="options">
+      <label>
+        <input type="checkbox" id="mammothCheck" />
+        Forzar conversión con mammoth (archivos .doc antiguos)
+      </label>
+    </div>
+
+    <!-- Convert button -->
+    <button class="convert-btn" id="convertBtn" disabled>Convertir</button>
+
+    <!-- Spinner -->
+    <div class="spinner" id="spinner"></div>
+
+    <!-- Status -->
+    <div class="status" id="status"></div>
+
+    <!-- Preview -->
+    <div class="preview-wrapper" id="previewWrapper">
+      <div class="preview-header">
+        <span>Vista previa del Markdown</span>
+        <div class="preview-actions">
+          <button class="btn-sm" id="copyBtn">Copiar</button>
+          <button class="btn-sm primary" id="downloadBtn">Descargar .md</button>
+        </div>
+      </div>
+      <textarea class="preview" id="previewArea" readonly></textarea>
+    </div>
+
+  </div>
+
+  <footer>
+    Herramienta local — los archivos no se almacenan de forma permanente
+  </footer>
+
+  <script>
+    const dropzone     = document.getElementById('dropzone');
+    const fileInput    = document.getElementById('fileInput');
+    const filenameLabel= document.getElementById('filenameLabel');
+    const convertBtn   = document.getElementById('convertBtn');
+    const mammothCheck = document.getElementById('mammothCheck');
+    const spinner      = document.getElementById('spinner');
+    const status       = document.getElementById('status');
+    const previewWrapper = document.getElementById('previewWrapper');
+    const previewArea  = document.getElementById('previewArea');
+    const copyBtn      = document.getElementById('copyBtn');
+    const downloadBtn  = document.getElementById('downloadBtn');
+
+    let currentFilename = '';
+
+    // ── Drag & drop visual ──
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        onFileSelected();
+      }
+    });
+
+    fileInput.addEventListener('change', onFileSelected);
+
+    function onFileSelected() {
+      const file = fileInput.files[0];
+      if (!file) return;
+      filenameLabel.textContent = file.name;
+      convertBtn.disabled = false;
+      hideStatus();
+      previewWrapper.style.display = 'none';
+    }
+
+    // ── Conversión ──
+    convertBtn.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      setLoading(true);
+      hideStatus();
+      previewWrapper.style.display = 'none';
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('mammoth', mammothCheck.checked ? 'true' : 'false');
+
+      try {
+        const res = await fetch('/convert', { method: 'POST', body: formData });
+
+        // ZIP (tiene imágenes) → descarga directa
+        const contentType = res.headers.get('Content-Type') || '';
+        if (contentType.includes('zip')) {
+          if (!res.ok) throw new Error('Error en el servidor');
+          const blob = await res.blob();
+          const disposition = res.headers.get('Content-Disposition') || '';
+          const match = disposition.match(/filename="?([^"]+)"?/);
+          const name = match ? match[1] : 'resultado.zip';
+          triggerDownload(blob, name);
+          showStatus('success', `✅ Descargado como ${name} (incluye imágenes)`);
+        } else {
+          // JSON con markdown
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Error desconocido');
+          currentFilename = data.filename;
+          previewArea.value = data.markdown;
+          previewWrapper.style.display = 'block';
+          showStatus('success', '✅ Conversión completada');
+        }
+      } catch (err) {
+        showStatus('error', `❌ ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // ── Copiar ──
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(previewArea.value).then(() => {
+        copyBtn.textContent = '¡Copiado!';
+        setTimeout(() => copyBtn.textContent = 'Copiar', 1800);
+      });
+    });
+
+    // ── Descargar .md ──
+    downloadBtn.addEventListener('click', () => {
+      const blob = new Blob([previewArea.value], { type: 'text/markdown' });
+      triggerDownload(blob, currentFilename || 'resultado.md');
+    });
+
+    // ── Helpers ──
+    function triggerDownload(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function setLoading(on) {
+      spinner.style.display = on ? 'block' : 'none';
+      convertBtn.disabled = on;
+    }
+
+    function showStatus(type, msg) {
+      status.className = `status ${type}`;
+      status.textContent = msg;
+      status.style.display = 'block';
+    }
+
+    function hideStatus() {
+      status.style.display = 'none';
+    }
+  </script>
+
+</body>
+</html>
