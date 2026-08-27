@@ -14,15 +14,18 @@ Convertidor de documentos Word (.doc, .docx) a Markdown con una interfaz web mod
 
 ```powershell
 # 1. Navegar al directorio del proyecto
-cd c:\Users\2905038\doc_to_md_converter
+cd .\doc_to_md_converter
 
-# 2. Activar el entorno virtual
+# 2. Crear entorno vitrual
+python -m venv venv
+
+# 3. Activar el entorno virtual
 .\venv\Scripts\Activate.ps1
 
-# 3. Instalar dependencias
+# 4. Instalar dependencias
 pip install flask python-docx mammoth
 
-# 4. Ejecutar la aplicación
+# 5. Ejecutar la aplicación
 python app.py
 ```
 
