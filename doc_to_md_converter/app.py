@@ -13,7 +13,7 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 
-from doc_to_md import docx_to_markdown, doc_to_md_mammoth
+from doc_to_md import docx_to_markdown, doc_to_md_mammoth, pdf_to_markdown
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB máx
@@ -23,7 +23,7 @@ OUTPUT_FOLDER = Path("outputs")
 UPLOAD_FOLDER.mkdir(exist_ok=True)
 OUTPUT_FOLDER.mkdir(exist_ok=True)
 
-ALLOWED_EXTENSIONS = {".doc", ".docx"}
+ALLOWED_EXTENSIONS = {".doc", ".docx", ".pdf"}
 
 
 def allowed_file(filename: str) -> bool:
@@ -46,7 +46,7 @@ def convert():
 
     filename = secure_filename(file.filename)
     if not allowed_file(filename):
-        return jsonify({"error": "Solo se permiten archivos .doc o .docx"}), 400
+        return jsonify({"error": "Solo se permiten archivos .doc, .docx o .pdf"}), 400
 
     use_mammoth = request.form.get("mammoth") == "true"
 
@@ -61,7 +61,9 @@ def convert():
 
     try:
         ext = Path(filename).suffix.lower()
-        if use_mammoth or ext == ".doc":
+        if ext == ".pdf":
+            pdf_to_markdown(input_path, output_md)
+        elif use_mammoth or ext == ".doc":
             doc_to_md_mammoth(input_path, output_md)
         else:
             docx_to_markdown(input_path, output_md)

@@ -1,6 +1,6 @@
 # Doc to Markdown Converter
 
-Convertidor de documentos Word (.doc, .docx) a Markdown con una interfaz web moderna.
+Convertidor de documentos Word (.doc, .docx) y PDF a Markdown con una interfaz web moderna.
 
 ## Requisitos
 
@@ -23,7 +23,7 @@ python -m venv venv
 .\venv\Scripts\Activate.ps1
 
 # 4. Instalar dependencias
-pip install flask python-docx mammoth
+pip install flask python-docx mammoth pdfplumber
 
 # 5. Ejecutar la aplicación
 python app.py
@@ -39,7 +39,7 @@ cd c:\Users\2905038\doc_to_md_converter
 venv\Scripts\activate.bat
 
 # 3. Instalar dependencias
-pip install flask python-docx mammoth
+pip install flask python-docx mammoth pdfplumber
 
 # 4. Ejecutar la aplicación
 python app.py
@@ -55,7 +55,7 @@ cd /path/to/doc_to_md_converter
 source venv/bin/activate
 
 # 3. Instalar dependencias
-pip install flask python-docx mammoth
+pip install flask python-docx mammoth pdfplumber
 
 # 4. Ejecutar la aplicación
 python app.py
@@ -73,8 +73,10 @@ Abre tu navegador y accede a esa dirección para usar la interfaz web.
 
 ## Características
 
-- ✅ Conversión de archivos .doc y .docx a Markdown
-- ✅ Interfaz web intuitiva
+- ✅ Conversión de archivos .doc, .docx y PDF a Markdown
+- ✅ Interfaz web intuitiva con vista previa en tiempo real
+- ✅ Modo claro y modo oscuro
+- ✅ Editor editable con sincronización de preview
 - ✅ Descarga de archivos convertidos
 - ✅ Soporte para múltiples archivos
 - ✅ Límite de 50 MB por archivo
@@ -122,6 +124,7 @@ pip install python-docx
 ### Error: "No module named 'mammoth'"
 ```powershell
 pip install mammoth
+pip install pdfplumber
 ```
 
 ### La aplicación no inicia
