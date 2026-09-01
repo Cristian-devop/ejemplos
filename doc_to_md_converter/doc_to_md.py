@@ -1,7 +1,7 @@
 """
-doc_to_md.py - Convertidor de archivos .doc/.docx a Markdown
+doc_to_md.py - Convertidor de archivos .doc/.docx/PDF a Markdown
 Requisitos:
-    pip install python-docx mammoth
+    pip install python-docx mammoth pdfplumber
 """
 
 import sys
@@ -24,6 +24,11 @@ try:
 except ImportError:
     print("ERROR: Instala mammoth con:  pip install mammoth")
     sys.exit(1)
+
+try:
+    import pdfplumber
+except ImportError:
+    pdfplumber = None
 
 
 # ─────────────────────────────────────────────
@@ -349,14 +354,56 @@ def doc_to_md_mammoth(doc_path: Path, output_path: Path):
 
 
 # ─────────────────────────────────────────────
+# Convertidor PDF a Markdown
+# ─────────────────────────────────────────────
+
+def pdf_to_markdown(pdf_path: Path, output_path: Path):
+    """Convierte un archivo PDF a Markdown preservando estructura."""
+    if pdfplumber is None:
+        raise ImportError("pdfplumber no está instalado. Instala con: pip install pdfplumber")
+    
+    md_lines = []
+    
+    try:
+        with pdfplumber.open(str(pdf_path)) as pdf:
+            print(f"📖 Procesando PDF: {pdf_path.name} ({len(pdf.pages)} páginas)")
+            
+            for page_num, page in enumerate(pdf.pages, 1):
+                text = page.extract_text()
+                
+                if text:
+                    # Agregar texto de la página
+                    lines = text.strip().split('\n')
+                    for line in lines:
+                        stripped = line.strip()
+                        if stripped:
+                            md_lines.append(stripped)
+                    
+                    # Separar páginas con salto de página markdown
+                    if page_num < len(pdf.pages):
+                        md_lines.append("\n---\n")
+                
+                print(f"  ✓ Página {page_num}/{len(pdf.pages)} procesada")
+    
+    except Exception as e:
+        print(f"⚠️  Error procesando PDF: {str(e)}")
+        raise
+    
+    # Guardar markdown
+    md_content = "\n".join(md_lines)
+    output_path.write_text(md_content, encoding="utf-8")
+    print(f"✅  Convertido desde PDF: {output_path}")
+
+
+# ─────────────────────────────────────────────
 # Entrada CLI
 # ─────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Convierte archivos .doc/.docx a Markdown sin perder datos."
+        description="Convierte archivos .doc/.docx/PDF a Markdown sin perder datos."
     )
-    parser.add_argument("input", help="Ruta al archivo .doc o .docx")
+    parser.add_argument("input", help="Ruta al archivo .doc, .docx o PDF")
     parser.add_argument(
         "-o", "--output",
         help="Ruta de salida .md (por defecto: mismo nombre que el input)",
@@ -384,8 +431,10 @@ def main():
         doc_to_md_mammoth(input_path, output_path)
     elif ext == ".docx":
         docx_to_markdown(input_path, output_path)
+    elif ext == ".pdf":
+        pdf_to_markdown(input_path, output_path)
     else:
-        print(f"ERROR: Extensión no soportada '{ext}'. Usa .doc o .docx")
+        print(f"ERROR: Extensión no soportada '{ext}'. Usa .doc, .docx o .pdf")
         sys.exit(1)
 
 
