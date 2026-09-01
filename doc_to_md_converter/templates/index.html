@@ -21,6 +21,19 @@
       --radius: 12px;
     }
 
+    body.light-mode {
+      --bg: #f5f5f5;
+      --surface: #ffffff;
+      --surface2: #f9f9f9;
+      --border: #e0e0e0;
+      --accent: #6c63ff;
+      --accent-hover: #857dff;
+      --success: #22c55e;
+      --error: #ef4444;
+      --text: #1a1a1a;
+      --text-muted: #666666;
+    }
+
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
       background: var(--bg);
@@ -35,6 +48,11 @@
     header {
       text-align: center;
       margin-bottom: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      position: relative;
     }
     header h1 {
       font-size: 2.2rem;
@@ -43,11 +61,38 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      margin: 0;
     }
     header p {
       color: var(--text-muted);
       margin-top: 8px;
       font-size: 0.95rem;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 0;
+      right: 20px;
+    }
+    
+    .theme-toggle button {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    
+    .theme-toggle button:hover {
+      background: var(--border);
+      transform: scale(1.1);
     }
 
     .card {
@@ -297,11 +342,73 @@
       margin: 16px 0 10px 0;
       color: #a0d1ff;
     }
+
+    body.light-mode .markdown-preview h1 {
+      color: #0052cc;
+    }
+    body.light-mode .markdown-preview h2 {
+      color: #0052cc;
+    }
+    body.light-mode .markdown-preview h3 {
+      color: #0052cc;
+    }
     .markdown-preview h4, .markdown-preview h5, .markdown-preview h6 {
       font-size: 1rem;
       font-weight: 700;
       margin: 12px 0 8px 0;
       color: var(--text);
+    }
+
+    body.light-mode .markdown-preview code {
+      background: #f0f0f0;
+      color: #d63384;
+    }
+
+    body.light-mode .markdown-preview pre {
+      background: #f5f5f5;
+      border-color: #ddd;
+    }
+
+    body.light-mode .markdown-preview pre code {
+      color: #000;
+    }
+
+    body.light-mode .markdown-preview blockquote {
+      color: #555;
+    }
+
+    body.light-mode .markdown-preview table th {
+      background: #f0f0f0;
+      color: #0052cc;
+      border-color: #ddd;
+    }
+
+    body.light-mode .markdown-preview table td {
+      border-color: #ddd;
+    }
+
+    body.light-mode .markdown-preview table tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    body.light-mode .split-panel {
+      background: #f9f9f9;
+      border-color: #e0e0e0;
+    }
+
+    body.light-mode .split-header {
+      background: #f0f0f0;
+      border-color: #e0e0e0;
+    }
+
+    body.light-mode textarea.markdown-editor {
+      background: #fff;
+      border-color: #e0e0e0;
+    }
+
+    body.light-mode .split-actions {
+      background: #f5f5f5;
+      border-color: #e0e0e0;
     }
 
     .markdown-preview p {
@@ -411,6 +518,9 @@
   <header>
     <h1>DOC → Markdown</h1>
     <p>Convierte archivos <strong>.doc</strong> y <strong>.docx</strong> a Markdown sin perder datos</p>
+    <div class="theme-toggle">
+      <button id="themeToggle" title="Cambiar tema">🌙</button>
+    </div>
   </header>
 
   <div class="card">
@@ -482,6 +592,32 @@
   <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
   
   <script>
+    // ── Theme Management ──
+    const themeToggle = document.getElementById('themeToggle');
+    const htmlElement = document.documentElement;
+
+    // Detectar preferencia guardada o del sistema
+    function initTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        themeToggle.textContent = '🌙';
+      } else {
+        document.body.classList.remove('light-mode');
+        themeToggle.textContent = '☀️';
+      }
+    }
+
+    // Inicializar tema al cargar
+    initTheme();
+
+    // Toggle de tema
+    themeToggle.addEventListener('click', () => {
+      const isLightMode = document.body.classList.toggle('light-mode');
+      localStorage.setItem('theme', isLightMode ? 'light' : 'dark');
+      themeToggle.textContent = isLightMode ? '🌙' : '☀️';
+    });
+    
     // Configurar marked para renderizar mejor markdown
     marked.setOptions({
       breaks: true,
