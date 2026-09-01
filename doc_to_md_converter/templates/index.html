@@ -657,6 +657,7 @@
 
     let currentFilename = '';
     let originalMarkdown = '';
+    let isSynchronizingScroll = false;
 
     // ── Actualizar preview en tiempo real ──
     function updatePreview() {
@@ -671,6 +672,56 @@
     }
 
     markdownEditor.addEventListener('input', updatePreview);
+
+    // ── Sincronización de scroll ──
+    function getPreviewPanel() {
+      return markdownPreview.parentElement;
+    }
+
+    // Sincronizar scroll del editor al preview
+    markdownEditor.addEventListener('scroll', () => {
+      if (isSynchronizingScroll) return;
+      isSynchronizingScroll = true;
+
+      const previewPanel = getPreviewPanel();
+      const editorScrollPercentage = markdownEditor.scrollTop / (markdownEditor.scrollHeight - markdownEditor.clientHeight || 1);
+      previewPanel.scrollTop = editorScrollPercentage * (previewPanel.scrollHeight - previewPanel.clientHeight);
+
+      setTimeout(() => {
+        isSynchronizingScroll = false;
+      }, 10);
+    });
+
+    // Sincronizar scroll del preview al editor
+    function setupPreviewScroll() {
+      const previewPanel = getPreviewPanel();
+      if (!previewPanel) return;
+
+      previewPanel.addEventListener('scroll', () => {
+        if (isSynchronizingScroll) return;
+        isSynchronizingScroll = true;
+
+        const previewScrollPercentage = previewPanel.scrollTop / (previewPanel.scrollHeight - previewPanel.clientHeight || 1);
+        markdownEditor.scrollTop = previewScrollPercentage * (markdownEditor.scrollHeight - markdownEditor.clientHeight);
+
+        setTimeout(() => {
+          isSynchronizingScroll = false;
+        }, 10);
+      });
+    }
+
+    // Configurar scroll del preview después de mostrar el contenido
+    function updatePreviewWithSync() {
+      const markdown = markdownEditor.value;
+      try {
+        const html = marked.parse(markdown);
+        const sanitized = DOMPurify.sanitize(html);
+        markdownPreview.innerHTML = sanitized;
+        setupPreviewScroll();
+      } catch (err) {
+        markdownPreview.innerHTML = '<p style="color: var(--error);">Error al renderizar markdown</p>';
+      }
+    }
 
     // ── Drag & drop visual ──
     dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
@@ -728,7 +779,7 @@
           currentFilename = data.filename;
           originalMarkdown = data.markdown;
           markdownEditor.value = data.markdown;
-          updatePreview();
+          updatePreviewWithSync();
           previewWrapper.style.display = 'block';
           splitContainer.classList.add('show');
           showStatus('success', '✅ Conversión completada');
@@ -757,7 +808,7 @@
     // ── Revertir cambios ──
     resetBtn.addEventListener('click', () => {
       markdownEditor.value = originalMarkdown;
-      updatePreview();
+      updatePreviewWithSync();
       resetBtn.textContent = 'Revertido!';
       setTimeout(() => resetBtn.textContent = 'Revertir cambios', 1500);
     });
