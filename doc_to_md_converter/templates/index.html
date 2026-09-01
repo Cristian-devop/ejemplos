@@ -517,7 +517,7 @@
 
   <header>
     <h1>DOC → Markdown</h1>
-    <p>Convierte archivos <strong>.doc</strong> y <strong>.docx</strong> a Markdown sin perder datos</p>
+    <p>Convierte archivos <strong>.doc</strong>, <strong>.docx</strong> y <strong>PDF</strong> a Markdown sin perder datos</p>
     <div class="theme-toggle">
       <button id="themeToggle" title="Cambiar tema">🌙</button>
     </div>
@@ -527,7 +527,7 @@
 
     <!-- Drop zone -->
     <div class="dropzone" id="dropzone">
-      <input type="file" id="fileInput" accept=".doc,.docx" />
+      <input type="file" id="fileInput" accept=".doc,.docx,.pdf" />
       <span class="dropzone-icon">📄</span>
       <strong>Arrastra tu archivo aquí</strong>
       <p>o haz clic para seleccionarlo</p>
@@ -538,7 +538,7 @@
     <div class="options">
       <label>
         <input type="checkbox" id="mammothCheck" />
-        Forzar conversión con mammoth (archivos .doc antiguos)
+        Forzar conversión con mammoth (solo para archivos .doc antiguos)
       </label>
     </div>
 
